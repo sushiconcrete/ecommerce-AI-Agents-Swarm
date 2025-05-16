@@ -4,8 +4,7 @@ A multi-agent system for e-commerce customer support and product recommendations
 
 ## Architecture
 
-![image](https://github.com/user-attachments/assets/0953314c-3247-48f2-9ccc-76f607ac24ad)
-
+![E-commerce AI Agents Architecture](images/ecommerce_agents_swarm.drawio.png)
 
 Unlike traditional supervisor architectures in multiagent system, our swarm allows agents to dynamically hand off control based on their specializations without central routing. It is really a decentralized practice where Handoffs are tools that return Command objects, telling exactly where to transfer control next. All agents share the same message state, ensuring conversation continuity. The fine-tuned Qwen 3-8B model is integrated as the retrieve_rules tool, giving the Customer Service Agent specialized e-commerce policy knowledge. Finally, every agent is able to decide when to deliver the final results.
 
@@ -57,6 +56,71 @@ model, tokenizer = FastLanguageModel.from_pretrained(
 ```python
 from langchain_community.utilities import SQLDatabase
 db = SQLDatabase.from_uri("sqlite:///path/to/mydatabase.db")
+```
+
+## Fine Tuning
+
+Fine-tuning enhances the model's specialized e-commerce knowledge:
+
+```python
+# Fine-tune Qwen 3-8B for e-commerce policies and product knowledge
+from unsloth import FastLanguageModel
+import datasets
+
+# Prepare dataset with e-commerce policies and product information
+dataset = datasets.load_dataset("path/to/ecommerce_dataset")
+
+# Initialize model for fine-tuning
+model, tokenizer = FastLanguageModel.from_pretrained(
+    model_name="Qwen/Qwen1.5-8B",
+    max_seq_length=2048,
+    load_in_4bit=True,
+)
+
+# Configure LoRA adapters
+model = FastLanguageModel.get_peft_model(
+    model,
+    r = 32,           # Rank parameter
+    target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
+                      "gate_proj", "up_proj", "down_proj",],
+    lora_alpha = 32,  # Alpha = rank
+    lora_dropout = 0, # Optimized setting
+    bias = "none",    # Optimized setting
+    use_gradient_checkpointing = "unsloth", # 30% less VRAM
+    random_state = 3407,
+    use_rslora = False,
+)
+
+# Use SFTTrainer for efficient fine-tuning
+from trl import SFTTrainer, SFTConfig
+trainer = SFTTrainer(
+    model = model,
+    tokenizer = tokenizer,
+    train_dataset = dataset["train"],
+    eval_dataset = dataset["test"],
+    args = SFTConfig(
+        dataset_text_field = "text",
+        per_device_train_batch_size = 2,
+        gradient_accumulation_steps = 4,
+        warmup_steps = 5,
+        max_steps = 30,
+        output_dir='outputs',
+        eval_strategy="epoch",
+        learning_rate = 2e-4,
+        logging_steps = 1,
+        optim = "adamw_8bit",
+        weight_decay = 0.01,
+        lr_scheduler_type = "linear",
+        seed = 3407,
+        report_to = "tensorboard",
+    ),
+)
+
+# Train the model
+trainer.train()
+
+# Save fine-tuned model
+model.save_pretrained("path/to/fine_tuned_model")
 ```
 
 ## Usage Examples
