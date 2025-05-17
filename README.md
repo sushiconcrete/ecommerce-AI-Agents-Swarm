@@ -4,9 +4,11 @@ A multi-agent system for e-commerce customer support and product recommendations
 
 ## Architecture
 
-![E-commerce AI Agents Architecture](images/ecommerce_agents_swarm.drawio.png)
+![image](https://github.com/user-attachments/assets/0953314c-3247-48f2-9ccc-76f607ac24ad)
 
-Unlike traditional supervisor architectures in multiagent system, our swarm allows agents to dynamically hand off control based on their specializations without central routing. It is really a decentralized practice where Handoffs are tools that return Command objects, telling exactly where to transfer control next. All agents share the same message state, ensuring conversation continuity. The fine-tuned Qwen 3-8B model is integrated as the retrieve_rules tool, giving the Customer Service Agent specialized e-commerce policy knowledge. Finally, every agent is able to decide when to deliver the final results.
+Unlike traditional supervisor architectures, our swarm enables agents to dynamically transfer control based on their expertise without central coordination. Handoffs are implemented as tools that return Command objects, specifying exactly where to transfer control next. All agents share the same conversation state, ensuring seamless interaction continuity. The fine-tuned Qwen 3-8B model serves as the retrieve_rules tool, providing the Customer Service Agent with specialized e-commerce policy knowledge. Each agent can independently determine when to deliver final results to the user.
+
+To use this system, follow the instructions in the "Qwen 3 8b lora finetuing.ipynb" notebook to prepare and fine-tune the model. The final model merging and implementation of the agent swarm is documented in the "5293final.ipynb" notebook.
 
 ## Installation
 
